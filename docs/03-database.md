@@ -42,9 +42,37 @@ Alembic 마이그레이션(`op.create_table` 등)은 SQLAlchemy DSL이라 이미
 | DB | core-service | bff-service | 상태 |
 |---|---|---|---|
 | Postgres | ✅ | ✅ | 기본값, 이 프레임워크 자체가 이걸로 계속 검증됨 |
-| MSSQL | ✅ (프로파일 있음) | 설정만, 미검증 | 설정/마이그레이션 폴더는 있지만 실제 기동 테스트는 드묾 (이미지가 커서) |
-| Oracle | ✅ (프로파일 있음) | 설정만, 미검증 | 위와 동일 |
+| MSSQL | ✅ | 설정만, 미검증 | core-service 컨테이너를 실제 `db-mssql`에 붙여서 Flyway 마이그레이션 + 회원가입/로그인/`/me`/RBAC(200/403)/404까지 전부 통과 확인 (2026-08-05) |
+| Oracle | ✅ | 설정만, 미검증 | 위와 동일하게 실제 `db-oracle`(FREEPDB1)에 붙여서 전부 통과 확인 (2026-08-05) |
 | SQLite | ✅ (프로파일 있음, 서버리스) | 미지원 | core-service 컨테이너에서 실제 부팅 검증됨. bff-service는 `aiosqlite` 드라이버 설치 안 되어 있음 |
+
+MSSQL/Oracle 검증 방법 (재현하고 싶을 때):
+
+```bash
+# MSSQL
+docker compose --profile mssql up -d db-mssql-init   # db-mssql 기동 + aidevframework DB 생성
+docker run -d --name core-mssql-test --network ai_dev_framework_default \
+  -e SPRING_PROFILES_ACTIVE=mssql \
+  -e DB_URL="jdbc:sqlserver://db-mssql:1433;databaseName=aidevframework;encrypt=false" \
+  -e DB_USERNAME=sa -e DB_PASSWORD='YourStrong!Passw0rd' \
+  -p 18083:8080 ai_dev_framework-core-service:latest
+
+# Oracle
+docker compose --profile oracle up -d db-oracle
+docker run -d --name core-oracle-test --network ai_dev_framework_default \
+  -e SPRING_PROFILES_ACTIVE=oracle \
+  -e DB_URL="jdbc:oracle:thin:@db-oracle:1521/FREEPDB1" \
+  -e DB_USERNAME=aidevframework -e DB_PASSWORD=aidevframework \
+  -p 18084:8080 ai_dev_framework-core-service:latest
+```
+
+**주의**: `docker compose --profile <x> down`은 지정한 프로파일만이 아니라 **기본 프로파일
+서비스(db/core-service/bff-service/frontend)까지 전부 내려버린다.** 특정 DB 컨테이너만 정리하고
+싶으면 `docker compose stop db-mssql db-mssql-init`처럼 서비스 이름을 콕 집어서 내릴 것.
+
+bff-service는 아직 MSSQL/Oracle로 실제 붙여보지 않았다 — `bff-service/README.md` "아직 안 된 것"
+참고. 위와 같은 방식으로 `DATABASE_URL`만 바꿔서 붙여보면 된다(드라이버 패키지 설치 필요:
+`aioodbc`/`oracledb_async` 등).
 
 ## 3.4 core-service: DB 프로파일 전환하기
 
