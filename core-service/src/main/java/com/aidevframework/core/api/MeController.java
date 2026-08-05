@@ -15,6 +15,7 @@ public class MeController {
     public ApiResponse<MeResponse> me(Authentication authentication) {
         List<String> roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority.startsWith("ROLE_"))
                 .toList();
         return ApiResponse.success(new MeResponse(authentication.getName(), roles));
     }

@@ -16,6 +16,9 @@ RUN ./gradlew --no-daemon bootJar -x test
 FROM eclipse-temurin:21-jre
 RUN useradd -r -m appuser
 WORKDIR /app
+# WORKDIR은 root 소유로 생성되므로 appuser로 chown 해줘야 sqlite 프로파일(현재 디렉터리에
+# DB 파일을 직접 생성)이 컨테이너 안에서도 동작한다.
+RUN chown appuser:appuser /app
 COPY --from=build --chown=appuser:appuser /workspace/build/libs/*.jar app.jar
 USER appuser
 EXPOSE 8080

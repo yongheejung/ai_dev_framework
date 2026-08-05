@@ -7,6 +7,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * 모든 컨트롤러(사람이 짠 코드든 AI 에이전트가 생성한 코드든)의 예외를
@@ -33,6 +35,12 @@ public class GlobalExceptionHandler {
                 .orElse(ErrorCode.VALIDATION_FAILED.defaultMessage());
         return ResponseEntity.status(ErrorCode.VALIDATION_FAILED.status())
                 .body(ApiResponse.failure(ErrorCode.VALIDATION_FAILED.name(), message));
+    }
+
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(Exception ex) {
+        return ResponseEntity.status(ErrorCode.NOT_FOUND.status())
+                .body(ApiResponse.failure(ErrorCode.NOT_FOUND.name(), ErrorCode.NOT_FOUND.defaultMessage()));
     }
 
     @ExceptionHandler(Exception.class)
