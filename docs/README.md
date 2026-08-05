@@ -12,6 +12,7 @@
 3. [데이터베이스](03-database.md) — DB 프로파일 전환(Postgres/MSSQL/Oracle/SQLite), 마이그레이션 추가하는 법
 4. [새 기능(도메인) 추가하기](04-adding-a-feature.md) — core-service/bff-service/frontend/mobile에 같은 패턴으로 기능 하나를 처음부터 끝까지 추가하는 실습
 5. [배포](05-deployment.md) — docker-compose 로컬 배포, Helm으로 K8s 배포, dev/staging/prod 환경 분리, CI
+6. [AI 에이전트 연동 설계](06-ai-agent-integration.md) — `universal_ai_agent_orchestrator`와 연동해서 자연어 명령으로 코드를 짜고 PR까지 자동 생성하는 파이프라인 설계 (상태: 설계 문서, 미구현)
 
 ## 먼저 알아둘 것
 
