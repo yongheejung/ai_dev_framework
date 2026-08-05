@@ -9,11 +9,17 @@ class AgentTaskRepository {
             .toList(),
       );
 
-  Future<AgentTask> create({required String agentName, required String instruction}) => bffClient.post(
-        '/agent-tasks',
-        {'agent_name': agentName, 'instruction': instruction},
-        (json) => AgentTask.fromJson(json as Map<String, dynamic>),
-      );
+  Future<AgentTask> create({
+    required String agentName,
+    required String instruction,
+  }) =>
+      bffClient.post(
+          '/agent-tasks',
+          {
+            'agent_name': agentName,
+            'instruction': instruction,
+          },
+          (json) => AgentTask.fromJson(json as Map<String, dynamic>));
 }
 
 final agentTaskRepository = AgentTaskRepository();

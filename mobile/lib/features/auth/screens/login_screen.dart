@@ -39,10 +39,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _loginError = null;
     });
     try {
-      await ref.read(authProvider.notifier).login(
-            username: _loginUsername.text,
-            password: _loginPassword.text,
-          );
+      await ref
+          .read(authProvider.notifier)
+          .login(username: _loginUsername.text, password: _loginPassword.text);
       if (mounted) Navigator.of(context).pop();
     } on ApiException catch (error) {
       setState(() => _loginError = error.message);
@@ -105,10 +104,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   if (_loginError != null) ...[
                     const SizedBox(height: 8),
-                    Text(_loginError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(
+                      _loginError!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 8),
-                  Text('개발용 admin 계정: admin / admin1234', style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    '개발용 admin 계정: admin / admin1234',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
@@ -130,7 +137,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextField(
                     controller: _registerPassword,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: '비밀번호 (8자 이상)'),
+                    decoration: const InputDecoration(
+                      labelText: '비밀번호 (8자 이상)',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton(
@@ -139,7 +148,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   if (_registerError != null) ...[
                     const SizedBox(height: 8),
-                    Text(_registerError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(
+                      _registerError!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ],
                   if (_registerMessage != null) ...[
                     const SizedBox(height: 8),

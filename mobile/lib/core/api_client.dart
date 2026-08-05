@@ -30,9 +30,14 @@ class ApiClient {
     this.attachTenant = false,
   });
 
-  Future<T> get<T>(String path, T Function(dynamic json) parse) => _request('GET', path, null, parse);
+  Future<T> get<T>(String path, T Function(dynamic json) parse) =>
+      _request('GET', path, null, parse);
 
-  Future<T> post<T>(String path, Object? body, T Function(dynamic json) parse) =>
+  Future<T> post<T>(
+    String path,
+    Object? body,
+    T Function(dynamic json) parse,
+  ) =>
       _request('POST', path, body, parse);
 
   Future<Map<String, String>> _buildHeaders() async {
@@ -66,13 +71,18 @@ class ApiClient {
         response = await http.get(uri, headers: headers);
         break;
       case 'POST':
-        response = await http.post(uri, headers: headers, body: body != null ? jsonEncode(body) : null);
+        response = await http.post(
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        );
         break;
       default:
         throw UnsupportedError('Unsupported method: $method');
     }
 
-    final decoded = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
     final success = decoded['success'] as bool? ?? false;
 
     if (!success) {

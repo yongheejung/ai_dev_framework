@@ -21,7 +21,9 @@ class HomeScreen extends ConsumerWidget {
             data: (me) => me == null
                 ? TextButton(
                     onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
                     ),
                     child: const Text('로그인'),
                   )
@@ -33,7 +35,8 @@ class HomeScreen extends ConsumerWidget {
                         child: Text('${me.username} (${me.roles.join(", ")})'),
                       ),
                       TextButton(
-                        onPressed: () => ref.read(authProvider.notifier).logout(),
+                        onPressed: () =>
+                            ref.read(authProvider.notifier).logout(),
                         child: const Text('로그아웃'),
                       ),
                     ],
@@ -50,10 +53,14 @@ class HomeScreen extends ConsumerWidget {
           Card(
             child: ListTile(
               title: const Text('에이전트 작업 관리'),
-              subtitle: const Text('bff-service의 agent-tasks API와 연동된 예시 화면입니다.'),
+              subtitle: const Text(
+                'bff-service의 agent-tasks API와 연동된 예시 화면입니다.',
+              ),
               trailing: const Icon(Icons.arrow_forward),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const AgentTaskScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const AgentTaskScreen(),
+                ),
               ),
             ),
           ),
@@ -64,7 +71,10 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('core-service 인증 / RBAC 데모', style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'core-service 인증 / RBAC 데모',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     'core-service의 JWT 로그인과 역할 기반 인가(RBAC)가 실제로 연동되어 있습니다.',

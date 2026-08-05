@@ -9,12 +9,20 @@ class AgentTaskListNotifier extends AsyncNotifier<List<AgentTask>> {
   @override
   Future<List<AgentTask>> build() => agentTaskRepository.list();
 
-  Future<void> create({required String agentName, required String instruction}) async {
-    await agentTaskRepository.create(agentName: agentName, instruction: instruction);
+  Future<void> create({
+    required String agentName,
+    required String instruction,
+  }) async {
+    await agentTaskRepository.create(
+      agentName: agentName,
+      instruction: instruction,
+    );
     ref.invalidateSelf();
     await future;
   }
 }
 
 final agentTaskListProvider =
-    AsyncNotifierProvider<AgentTaskListNotifier, List<AgentTask>>(AgentTaskListNotifier.new);
+    AsyncNotifierProvider<AgentTaskListNotifier, List<AgentTask>>(
+  AgentTaskListNotifier.new,
+);

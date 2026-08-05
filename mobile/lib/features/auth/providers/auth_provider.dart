@@ -20,8 +20,14 @@ class AuthNotifier extends AsyncNotifier<MeResponse?> {
     }
   }
 
-  Future<void> login({required String username, required String password}) async {
-    final token = await authRepository.login(username: username, password: password);
+  Future<void> login({
+    required String username,
+    required String password,
+  }) async {
+    final token = await authRepository.login(
+      username: username,
+      password: password,
+    );
     await TokenStore.write(token.accessToken);
     ref.invalidateSelf();
     await future;
@@ -33,4 +39,6 @@ class AuthNotifier extends AsyncNotifier<MeResponse?> {
   }
 }
 
-final authProvider = AsyncNotifierProvider<AuthNotifier, MeResponse?>(AuthNotifier.new);
+final authProvider = AsyncNotifierProvider<AuthNotifier, MeResponse?>(
+  AuthNotifier.new,
+);

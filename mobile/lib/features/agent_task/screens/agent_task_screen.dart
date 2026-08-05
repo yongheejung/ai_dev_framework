@@ -24,7 +24,8 @@ class _AgentTaskScreenState extends ConsumerState<AgentTaskScreen> {
   }
 
   Future<void> _submit() async {
-    if (_agentNameController.text.isEmpty || _instructionController.text.isEmpty) {
+    if (_agentNameController.text.isEmpty ||
+        _instructionController.text.isEmpty) {
       return;
     }
     setState(() => _submitting = true);
@@ -37,7 +38,9 @@ class _AgentTaskScreenState extends ConsumerState<AgentTaskScreen> {
       _instructionController.clear();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$error')));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -58,7 +61,9 @@ class _AgentTaskScreenState extends ConsumerState<AgentTaskScreen> {
               children: [
                 TextField(
                   controller: _agentNameController,
-                  decoration: const InputDecoration(labelText: '에이전트 이름 (예: feature-developer)'),
+                  decoration: const InputDecoration(
+                    labelText: '에이전트 이름 (예: feature-developer)',
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -85,7 +90,8 @@ class _AgentTaskScreenState extends ConsumerState<AgentTaskScreen> {
                 }
                 return ListView.separated(
                   itemCount: tasks.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final task = tasks[index];
                     return ListTile(
@@ -97,7 +103,9 @@ class _AgentTaskScreenState extends ConsumerState<AgentTaskScreen> {
                         children: [
                           Text(task.status),
                           Text(
-                            DateFormat('yyyy.MM.dd HH:mm').format(task.createdAt),
+                            DateFormat(
+                              'yyyy.MM.dd HH:mm',
+                            ).format(task.createdAt),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
