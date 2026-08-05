@@ -1,0 +1,60 @@
+name: Mobile CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile-ci.yml"
+  pull_request:
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile-ci.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: mobile
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib
+      - run: flutter analyze
+
+  # mobile/에는 lib/ 소스만 있고 android/ios 네이티브 프로젝트는 아직 커밋되어 있지 않다
+  # (flutter create를 로컬에서 실행한 적이 없음 — mobile/README.md 참고). 그래서 빌드 잡에서는
+  # `flutter create --platforms=...`로 플랫폼 스캐폴딩을 그 자리에서 생성한 뒤 빌드한다.
+  # 서명 없이도 빌드되는지만 확인하는 게 목적이라 android는 debug, iOS는 --no-codesign을 쓴다.
+  build-android:
+    needs: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter create --platforms=android .
+      - run: flutter pub get
+      - run: flutter build apk --debug
+
+  build-ios:
+    needs: analyze
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter create --platforms=ios .
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign

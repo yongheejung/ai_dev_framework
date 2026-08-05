@@ -67,20 +67,32 @@ flutter run \
 1. Flutter SDK 설치 (https://docs.flutter.dev/get-started/install)
 2. `flutter pub get` — 의존성 설치되면서 pubspec.yaml의 버전 제약이 실제로 맞는지도 같이 확인됨
 3. `flutter analyze` — 이 세션에서 손으로 작성만 하고 못 돌려본 부분이라 문법/타입 오류가 있을 수 있음
-4. core-service/bff-service를 로컬(`docker compose up`)에 띄운 상태에서 에뮬레이터로 `flutter run`
-5. 로그인(admin/admin1234) → 관리자 핑 성공, 에이전트 작업 등록/조회까지 실제로 눌러서 확인
+4. `flutter create .` — `android`/`ios` 네이티브 프로젝트가 아직 없어서 `flutter run`/`flutter build`가
+   안 먹는다. 이 명령으로 생성되는 폴더는 커밋해두면 CI도 매번 새로 만들지 않고 그대로 쓸 수 있음
+5. core-service/bff-service를 로컬(`docker compose up`)에 띄운 상태에서 에뮬레이터로 `flutter run`
+6. 로그인(admin/admin1234) → 관리자 핑 성공, 에이전트 작업 등록/조회까지 실제로 눌러서 확인
 
-## CI/CD (제안)
+## CI/CD
 
-물리 Mac 없이 iOS 빌드를 검증하려면 GitHub Actions의 `macos-latest` 러너(Xcode 사전 설치됨)를 쓰면
-된다 — `subosito/flutter-action`으로 Flutter SDK를 세팅한 뒤 `flutter build ipa`/
-`flutter build appbundle`을 돌리는 게 표준 패턴이다. 앱스토어 실제 배포까지 가려면 Apple Developer
-Program 가입 + 인증서/프로비저닝 프로파일(iOS), 키스토어(Android)를 GitHub Secrets로 관리해야 한다
-(보통 iOS 쪽은 `fastlane`을 같이 씀). 아직 GitHub 저장소가 없어서 워크플로우 파일은 만들지 않았다 —
-필요해지면 `.github/workflows/mobile-ci.yml`로 추가하면 된다.
+`.github/workflows/mobile-ci.yml`에 물리 Mac 없이 돌아가는 CI가 있다.
+
+- `analyze`: `flutter pub get` + `dart format --set-exit-if-changed` + `flutter analyze` (ubuntu-latest)
+- `build-android` / `build-ios`: `macos-latest` 러너(Xcode 사전 설치됨)에서 `subosito/flutter-action`으로
+  Flutter SDK를 세팅한 뒤 빌드
+
+`mobile/`에는 아직 `android/`/`ios/` 네이티브 프로젝트가 커밋되어 있지 않다 (`flutter create`를
+로컬에서 실행한 적이 없음 — 위 "빌드 미검증" 참고). 그래서 빌드 잡은 `flutter create --platforms=...`로
+그 자리에서 플랫폼 스캐폴딩을 생성한 뒤 빌드한다. 서명 없이 컴파일만 확인하는 게 목적이라 Android는
+`--debug`(기본 디버그 키로 서명됨), iOS는 `--no-codesign`을 쓴다 — 앱스토어/플레이스토어 실제 배포까지
+가려면 Apple Developer Program 가입 + 인증서/프로비저닝 프로파일(iOS), 키스토어(Android)를 GitHub
+Secrets로 관리하고 워크플로우에 서명 단계를 추가해야 한다(보통 iOS 쪽은 `fastlane`을 같이 씀).
+
+로컬에서 `flutter create .`로 실제 플랫폼 폴더를 한 번 만들어서 커밋해두면(아래 "다음 단계" 2번),
+CI의 `flutter create --platforms=...` 단계는 지워도 된다 — 그때는 커밋된 진짜 프로젝트를 그대로 빌드하면 된다.
 
 ## 아직 안 된 것
 
 - 실제 빌드/실행 검증 (위 "빌드 미검증" 참고)
 - 다크모드 토글 UI (시스템 설정만 따라감)
-- GitHub Actions CI 워크플로우 (저장소 생기면 추가)
+- `android`/`ios` 네이티브 프로젝트를 로컬에서 `flutter create .`로 생성해서 커밋 (그러면 CI에서
+  매번 스캐폴딩을 새로 만들 필요 없이 진짜 서명 빌드도 가능해짐)
