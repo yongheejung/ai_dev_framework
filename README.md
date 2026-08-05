@@ -47,6 +47,17 @@ DB + core-service + bff-service + frontend + Ingress가 한 번에 뜬다. 자�
 각 서비스 상세(로컬 개발 방식, DB 프로파일 전환, 인증 사용법 등)는 `core-service/README.md`,
 `bff-service/README.md`, `frontend/README.md` 참고.
 
+## 사용 가이드
+
+"이 프레임워크로 실제 새 프로젝트를 어떻게 만드는가"는 [`docs/`](docs/README.md)에 주제별로
+정리되어 있다:
+
+- [새 프로젝트 시작하기](docs/01-getting-started.md)
+- [인증 / RBAC](docs/02-auth-and-rbac.md)
+- [데이터베이스](docs/03-database.md)
+- [새 기능(도메인) 추가하기](docs/04-adding-a-feature.md)
+- [배포](docs/05-deployment.md)
+
 ## 진행 단계
 
 - [x] Phase 1 — core-service JWT + RBAC 자체 인증
