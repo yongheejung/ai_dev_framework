@@ -1,0 +1,14 @@
+# dev 환경 오버레이. 대부분 기본값(values.yaml) 그대로 쓰고, 개발 편의만 살짝 조정한다.
+# helm install myproject-dev ./helm/ai-dev-framework -f helm/ai-dev-framework/values-dev.yaml
+
+coreService:
+  replicaCount: 1
+
+bffService:
+  replicaCount: 1
+
+frontend:
+  replicaCount: 1
+
+ingress:
+  host: "" # 호스트 제한 없음 — 클러스터 진입점 아무 주소로나 접근 가능

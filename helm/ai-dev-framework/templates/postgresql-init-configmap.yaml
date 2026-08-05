@@ -1,0 +1,11 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ai-dev-framework.fullname" . }}-postgresql-init
+  labels:
+    {{- include "ai-dev-framework.labels" . | nindent 4 }}
+data:
+  01-create-bff-db.sql: |
+    CREATE DATABASE {{ .Values.postgresql.bffDatabase }};
+{{- end }}

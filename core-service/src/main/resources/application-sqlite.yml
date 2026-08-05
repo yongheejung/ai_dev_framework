@@ -1,0 +1,16 @@
+# SQLite는 서버 없이 파일 하나로 붙는 "가장 가벼운" 옵션 — 로컬 개발/데모/단일 사용자 용도로만 쓴다.
+# Flyway 최신 버전(12.x)은 SQLite 커뮤니티 모듈이 구버전(10.x)에 멈춰 있어 호환되지 않으므로,
+# 이 프로파일에서는 Flyway 대신 Hibernate ddl-auto=update로 스키마를 자동 생성한다.
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:sqlite:./aidevframework-sqlite.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      # SQLite는 동시 쓰기를 지원하지 않으므로 커넥션 풀을 1개로 제한해 잠금 충돌을 피한다.
+      maximum-pool-size: 1
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+  flyway:
+    enabled: false

@@ -1,0 +1,59 @@
+# 내장 Postgres. 다른 DB(MSSQL/Oracle/SQLite)로 바꾸려면 postgresql.enabled: false로 끄고
+# coreService.extraEnv / bffService.extraEnv로 직접 DB_URL 등을 넣어라 (core-service는 스프링 프로파일도
+# 같이 바꿔야 한다 — core-service/README.md 참고).
+postgresql:
+  enabled: true
+  image: postgres:16-alpine
+  username: aidevframework
+  password: aidevframework # 운영 배포에서는 반드시 --set postgresql.password=... 로 덮어쓸 것
+  database: aidevframework
+  # bff-service는 core-service와 다른 DB를 쓴다. Flyway(core)와 Alembic(bff)이 같은 스키마를
+  # 공유하면 어느 쪽 마이그레이션이 먼저 도냐에 따라 Flyway가 "낯선 테이블이 이미 있다"며
+  # baseline 에러를 내는 실제 버그가 있었다 — DB를 분리해서 그 경합 자체를 없앤다.
+  bffDatabase: aidevframework_bff
+  persistence:
+    enabled: true
+    size: 1Gi
+
+coreService:
+  image:
+    repository: core-service
+    tag: local
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 8080
+  resources: {}
+  extraEnv: []
+
+bffService:
+  image:
+    repository: bff-service
+    tag: local
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 8000
+  resources: {}
+  extraEnv: []
+
+# Next.js(standalone) 프론트엔드. 백엔드 주소는 빌드 시점에 안 박힌다 — 브라우저는 항상
+# /api/bff/*, /api/core/*로만 호출하고 Next.js 서버가 BFF_INTERNAL_URL/CORE_SERVICE_INTERNAL_URL
+# (frontend-deployment.yaml에서 이 릴리스의 Service DNS로 자동 설정)로 프록시한다.
+# 그래서 이미지 하나로 dev/staging/prod 어디든 그대로 쓸 수 있다. 기본 tag=local은 로컬
+# kind/minikube 검증용이다.
+frontend:
+  enabled: true
+  image:
+    repository: frontend
+    tag: local
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 3000
+  extraEnv: []
+
+# 클러스터에 ingress-nginx 같은 컨트롤러가 이미 떠 있다고 가정한다 (플랫폼 팀이 한 번만 설치).
+# host를 비워두면 호스트 제한 없이 전부 매칭된다.
+ingress:
+  enabled: true
+  className: nginx
+  host: ""
+  annotations: {}

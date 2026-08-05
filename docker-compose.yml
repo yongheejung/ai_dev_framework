@@ -1,0 +1,138 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: aidevframework
+      POSTGRES_USER: aidevframework
+      POSTGRES_PASSWORD: aidevframework
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # bff-service는 core-service와 다른 DB(aidevframework_bff)를 쓴다 — Flyway(core)와
+      # Alembic(bff)이 같은 스키마를 공유하면 어느 쪽이 먼저 도냐에 따라 Flyway가 "낯선 테이블이
+      # 이미 있다"며 baseline 에러를 내는 실제 버그가 있었다. 컨테이너 최초 기동 시 1회만 실행된다.
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aidevframework"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # docker compose up -d 로 db까지 포함해서 전체 스택이 뜬다.
+  core-service:
+    build: ./core-service
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/aidevframework
+      DB_USERNAME: aidevframework
+      DB_PASSWORD: aidevframework
+    ports:
+      - "${CORE_SERVICE_PORT:-8080}:8080"
+
+  # bff-service가 뜨기 전에 한 번 돌고 끝나는 마이그레이션 잡 (core-service는 Flyway가 기동 시 알아서 함).
+  bff-service-migrate:
+    build: ./bff-service
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aidevframework:aidevframework@db:5432/aidevframework_bff
+    entrypoint: ["alembic", "upgrade", "head"]
+
+  bff-service:
+    build: ./bff-service
+    depends_on:
+      bff-service-migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aidevframework:aidevframework@db:5432/aidevframework_bff
+      CORE_SERVICE_BASE_URL: http://core-service:8080
+      # 프론트엔드는 이제 브라우저에서 bff-service를 직접 안 부르고 Next.js 서버를 거쳐 프록시하므로
+      # (frontend/next.config.ts rewrites) 원래는 CORS가 필요 없다. curl/Postman 등으로 직접
+      # 두드려볼 때를 위해 남겨둔다.
+      CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-3000},http://127.0.0.1:${FRONTEND_PORT:-3000}
+    ports:
+      - "${BFF_SERVICE_PORT:-8000}:8000"
+
+  # 프론트엔드는 브라우저에 core-service/bff-service 주소를 노출하지 않는다 — 항상
+  # /api/bff/*, /api/core/* 로만 호출하고 Next.js 서버(컨테이너 내부)가 아래 env를 보고
+  # 실제 백엔드로 프록시한다. 컨테이너 내부 통신이라 도커 네트워크 DNS 이름을 그대로 쓰면 되고,
+  # dev/staging/prod 전환 시 이미지 재빌드 없이 이 env만 바꾸면 된다.
+  frontend:
+    build: ./frontend
+    environment:
+      BFF_INTERNAL_URL: http://bff-service:8000
+      CORE_SERVICE_INTERNAL_URL: http://core-service:8080
+    depends_on:
+      - bff-service
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+  # 기본은 Postgres. MSSQL로 core-service를 띄워보고 싶을 때만 켠다:
+  #   docker compose --profile mssql up -d db-mssql-init
+  #   SPRING_PROFILES_ACTIVE=mssql DB_URL="jdbc:sqlserver://localhost:1433;databaseName=aidevframework;encrypt=false" \
+  #     DB_USERNAME=sa DB_PASSWORD='YourStrong!Passw0rd' ./gradlew bootRun
+  db-mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    profiles: ["mssql"]
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1433:1433"
+    volumes:
+      - db-mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # db-mssql이 healthy해지면 aidevframework 데이터베이스를 한 번 만들어주고 종료되는 1회성 잡.
+  db-mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    profiles: ["mssql"]
+    depends_on:
+      db-mssql:
+        condition: service_healthy
+    entrypoint:
+      - /opt/mssql-tools18/bin/sqlcmd
+      - -C
+      - -S
+      - db-mssql
+      - -U
+      - sa
+      - -P
+      - "YourStrong!Passw0rd"
+      - -Q
+      - "IF DB_ID('aidevframework') IS NULL CREATE DATABASE aidevframework"
+
+  # Oracle: docker compose --profile oracle up -d db-oracle
+  #   SPRING_PROFILES_ACTIVE=oracle DB_URL="jdbc:oracle:thin:@localhost:1521/FREEPDB1" \
+  #     DB_USERNAME=aidevframework DB_PASSWORD=aidevframework ./gradlew bootRun
+  db-oracle:
+    image: gvenzl/oracle-free:23-slim
+    profiles: ["oracle"]
+    environment:
+      ORACLE_PASSWORD: aidevframework
+      APP_USER: aidevframework
+      APP_USER_PASSWORD: aidevframework
+    ports:
+      - "1521:1521"
+    volumes:
+      - db-oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  # SQLite는 서버 컨테이너가 필요 없다 (파일 하나로 동작). application-sqlite.yml 참고.
+
+volumes:
+  db-data:
+  db-mssql-data:
+  db-oracle-data:

@@ -1,0 +1,15 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ai-dev-framework.fullname" . }}-postgresql
+  labels:
+    {{- include "ai-dev-framework.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "ai-dev-framework.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+  ports:
+    - port: 5432
+      targetPort: 5432
+{{- end }}

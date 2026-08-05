@@ -1,0 +1,19 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+pubspec.lock
+
+# IDE
+.idea/
+*.iml
+
+# platform-specific build artifacts (flutter create로 platform 폴더를 만들면 생기는 것들)
+android/.gradle/
+android/local.properties
+ios/Pods/
+ios/.symlinks/

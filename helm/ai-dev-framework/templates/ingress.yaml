@@ -1,0 +1,38 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ai-dev-framework.fullname" . }}
+  labels:
+    {{- include "ai-dev-framework.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - {{- if .Values.ingress.host }}
+      host: {{ .Values.ingress.host }}
+      {{- end }}
+      http:
+        paths:
+          # bff-service 고유 경로만 명시적으로 bff로 보낸다. 나머지는 core-service(프론트가 없을 때)
+          # 또는 frontend(있을 때)로. API 표면이 늘어나면 이 규칙도 같이 넓혀야 한다.
+          - path: /api/v1/agent-tasks
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ai-dev-framework.fullname" . }}-bff-service
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ai-dev-framework.fullname" . }}-{{ if .Values.frontend.enabled }}frontend{{ else }}core-service{{ end }}
+                port:
+                  number: 80
+{{- end }}

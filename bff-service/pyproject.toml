@@ -1,0 +1,16 @@
+[project]
+name = "bff-service"
+version = "0.1.0"
+description = "AI Dev Framework Gateway/BFF layer (FastAPI) - frontend/AI agent 연동 담당"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

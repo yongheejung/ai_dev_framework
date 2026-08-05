@@ -1,0 +1,22 @@
+# staging 환경 오버레이. 운영과 같은 이미지 태그/구성으로 미리 검증하는 용도.
+# helm install myproject-staging ./helm/ai-dev-framework \
+#   -f helm/ai-dev-framework/values-staging.yaml \
+#   --set postgresql.password=<시크릿 매니저에서 가져온 값>
+
+coreService:
+  image:
+    tag: "staging" # CI가 스테이징 배포 시 실제로 민 태그로 --set 덮어쓰는 걸 권장
+  replicaCount: 1
+
+bffService:
+  image:
+    tag: "staging"
+  replicaCount: 1
+
+frontend:
+  image:
+    tag: "staging"
+  replicaCount: 1
+
+ingress:
+  host: "staging.example.com" # 실제 스테이징 도메인으로 바꿀 것

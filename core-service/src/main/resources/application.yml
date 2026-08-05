@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: core-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/aidevframework}
+    username: ${DB_USERNAME:aidevframework}
+    password: ${DB_PASSWORD:aidevframework}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  # {vendor}는 Flyway가 datasource 방언(postgresql/sqlserver 등)에 맞춰 자동으로 채워준다.
+  # MSSQL을 붙이면 db/migration/sqlserver 밑에 동일한 마이그레이션을 추가하면 된다 (Phase 2).
+  flyway:
+    locations: classpath:db/migration/{vendor}
+
+  # 자체 발급 JWT는 JwtKeyConfig가 담당한다. 외부 OIDC Provider(Keycloak/Auth0 등)로 교체하면
+  # 아래 설정으로 전환하고 JwtKeyConfig/SecurityConfig의 커스텀 인코더·컨버터는 제거한다.
+  # security:
+  #   oauth2:
+  #     resourceserver:
+  #       jwt:
+  #         issuer-uri: ${OIDC_ISSUER_URI:}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

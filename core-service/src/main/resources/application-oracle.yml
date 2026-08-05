@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:oracle:thin:@localhost:1521/FREEPDB1}
+    username: ${DB_USERNAME:aidevframework}
+    password: ${DB_PASSWORD:aidevframework}
+    driver-class-name: oracle.jdbc.OracleDriver

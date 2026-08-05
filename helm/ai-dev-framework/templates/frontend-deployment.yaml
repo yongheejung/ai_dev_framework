@@ -1,0 +1,50 @@
+{{- if .Values.frontend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ai-dev-framework.fullname" . }}-frontend
+  labels:
+    {{- include "ai-dev-framework.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ai-dev-framework.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "ai-dev-framework.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.frontend.port }}
+          env:
+            # 브라우저는 core-service/bff-service 주소를 모른다 — Next.js 서버의 Route Handler
+            # (app/api/bff, app/api/core)가 이 클러스터 내부 Service DNS로 요청마다 프록시한다.
+            # 이미지 재빌드 없이 이 env만으로 dev/staging/prod를 전환할 수 있다.
+            - name: BFF_INTERNAL_URL
+              value: "http://{{ include "ai-dev-framework.fullname" . }}-bff-service"
+            - name: CORE_SERVICE_INTERNAL_URL
+              value: "http://{{ include "ai-dev-framework.fullname" . }}-core-service"
+            {{- with .Values.frontend.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+{{- end }}

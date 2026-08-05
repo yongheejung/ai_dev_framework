@@ -1,0 +1,17 @@
+{{ .Release.Name }} 배포 완료.
+
+포트포워딩으로 바로 확인:
+  kubectl port-forward svc/{{ include "ai-dev-framework.fullname" . }}-core-service 8080:80
+  kubectl port-forward svc/{{ include "ai-dev-framework.fullname" . }}-bff-service 8000:80
+
+  curl http://localhost:8080/actuator/health
+  curl http://localhost:8000/health
+
+{{- if .Values.ingress.enabled }}
+
+Ingress가 켜져 있다({{ .Values.ingress.className }}). 클러스터에 ingress 컨트롤러가 떠 있어야
+{{ if .Values.ingress.host }}{{ .Values.ingress.host }}{{ else }}<ingress 주소>{{ end }} 로 바로 접근된다.
+{{- end }}
+
+bff-service 마이그레이션 잡 상태 확인:
+  kubectl get jobs -l app.kubernetes.io/component=bff-service-migrate

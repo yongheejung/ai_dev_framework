@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ai-dev-framework.fullname" . }}-core-service
+  labels:
+    {{- include "ai-dev-framework.labels" . | nindent 4 }}
+    app.kubernetes.io/component: core-service
+spec:
+  replicas: {{ .Values.coreService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ai-dev-framework.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: core-service
+  template:
+    metadata:
+      labels:
+        {{- include "ai-dev-framework.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: core-service
+    spec:
+      initContainers:
+        {{- include "ai-dev-framework.waitForPostgres" . | nindent 8 }}
+      containers:
+        - name: core-service
+          image: "{{ .Values.coreService.image.repository }}:{{ .Values.coreService.image.tag }}"
+          imagePullPolicy: {{ .Values.coreService.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.coreService.port }}
+          env:
+            {{- if .Values.postgresql.enabled }}
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ai-dev-framework.fullname" . }}-postgresql
+                  key: DB_URL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ai-dev-framework.fullname" . }}-postgresql
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ai-dev-framework.fullname" . }}-postgresql
+                  key: POSTGRES_PASSWORD
+            {{- end }}
+            {{- with .Values.coreService.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.coreService.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.coreService.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.coreService.resources | nindent 12 }}

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: ai-dev-framework
+description: >
+  AI Dev Framework 전체 스택(Postgres + core-service + bff-service + 선택적 frontend + Ingress)을
+  helm install [프로젝트명] 한 번으로 배포하는 차트.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
