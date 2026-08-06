@@ -193,9 +193,14 @@ CLI/웹 UI 대신 API를 직접 호출했고("정말 되는지" 확인이 목적
 > diff 적용 후에는 로컬 체크아웃 전체를 대상으로 실제 `pytest`를 한 번 더 돌리는 검증 스텝이
 > 필요할 수 있다(오케스트레이터 샌드박스가 아니라 우리 쪽 CI에서).
 
-**Phase B — REST 연동 (AI Dev Framework 쪽만)**
-`orchestrator_client.py` + `agent-tasks` 확장. Job 생성/시작/상태 조회까지만. **승인은 여전히
-오케스트레이터 자체 UI에서** — git 반영은 아직 없음.
+**Phase B — REST 연동 ✅ 완료 (2026-08-06)**
+`orchestrator_client.py`(`create_job`/`start_job`/`get_job`) + `agent-tasks` 확장
+(`POST /agent-tasks`가 생성 즉시 위임, `POST /agent-tasks/{id}/sync`로 상태 동기화, 위임 실패는
+요청을 실패시키지 않고 `status=DELEGATION_FAILED`+`delegation_error`로 남김). 실제 오케스트레이터
+API로 E2E 검증 완료 — 진짜 작업을 생성해 실제 `job_id`/`run_id`를 받고, `QUEUED`→`RUNNING`이
+오케스트레이터 쪽 기록과 정확히 일치하는 것까지 확인, 마지막에 취소로 정리. 유닛 테스트
+4건(`test_orchestrator_client.py`) 포함 bff-service 전체 스위트 통과. **승인은 여전히 오케스트레이터
+자체 UI에서** — git 반영은 아직 없음(Phase C).
 
 **Phase C — git 저장 커넥터 (여기서부터 실제로 코드가 저장소에 반영됨)**
 2.1.2절. 이 단계부터는 에이전트가 실제 GitHub 저장소에 쓰기 시작하므로, 처음엔 이 커넥터를 좁은
