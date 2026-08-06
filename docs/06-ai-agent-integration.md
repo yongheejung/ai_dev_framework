@@ -206,8 +206,41 @@ API로 E2E 검증 완료 — 진짜 작업을 생성해 실제 `job_id`/`run_id`
 2.1.2절. 이 단계부터는 에이전트가 실제 GitHub 저장소에 쓰기 시작하므로, 처음엔 이 커넥터를 좁은
 범위(예: bff-service 폴더만)에만 켜두고 며칠 지켜본 뒤 넓히는 걸 권장.
 
-**Phase D — 샌드박스 Java 확장 (core-service까지 대상 확대)**
-2.1.1절. Gradle 오프라인 캐시 작업이 있어서 별도 소요 예상 — Phase C가 안정된 뒤 진행.
+**Phase D — 샌드박스 Java 확장 ⚠️ 이미지/설정은 완료, 실사용은 오케스트레이터 코어 수정 전까지 블로킹 (2026-08-06)**
+
+완료하고 실제로 검증한 것:
+- 샌드박스 이미지에 JDK 21(멀티스테이지로 `eclipse-temurin:21-jdk`에서 복사) + core-service 기준
+  Gradle 오프라인 캐시 추가. **`--network none`(실제 샌드박스와 동일 조건)에서 core-service 전체를
+  마운트하고 `./gradlew test`를 돌려 `BUILD SUCCESSFUL` 확인** — Gradle 오프라인 빌드 자체는
+  완전히 동작한다.
+- `SPRING_PROFILES_ACTIVE=sqlite`를 이미지 기본 ENV로 고정 — `code_exec_allowed_commands` 검사
+  (`app/sandbox.py:138`)가 "명령이 허용 목록과 정확히 같거나 그 뒤에 인자만 붙는지"만 보기 때문에
+  `FOO=bar ./gradlew ...`처럼 앞에 환경변수를 못 붙인다는 걸 코드로 확인하고 반영한 것. 샌드박스는
+  항상 네트워크 차단이라 SQLite 말고는 어차피 접속 가능한 DB가 없다.
+- `.env`: `APP_HOST_SOURCE_ROOT`를 AI Dev Framework 루트로 확장(기존엔 bff-service만),
+  `APP_CODE_EXEC_ALLOWED_COMMANDS`에 `./gradlew test`/`./gradlew build` 추가.
+- `code-build-core-job.yaml` 신규 등록 확인(`GET /job-templates`에 노출됨, api 이미지 재빌드로
+  `examples/`가 다시 구워져야 반영됨 — 라이브 마운트 아님).
+
+**⚠️ 실제 job으로 끝까지 돌려보고 발견한 블로킹 이슈 — `verify`가 "완전히 새로운 파일 하나"조차
+검증 못 한다.** `code-build-core-job`으로 "독립적인 Calculator 클래스 하나 + JUnit 테스트"를
+요청했는데, `verify` 노드가 `exit_code: 127, "./gradlew: not found"`로 실패했다. Python과 달리
+**Gradle은 `gradlew`/`settings.gradle.kts`/`build.gradle.kts` 같은 프로젝트 뼈대가 있어야 어떤
+task든 실행 자체가 된다** — `verify`는 `$nodes.write.files`(방금 쓴 파일)만 스테이징하므로
+(2.1.2절과 같은 근본 원인), Python은 파일 하나만 있어도 `pytest`가 돌지만 Gradle은 완전히
+새 파일 하나짜리 시나리오에서도 원천적으로 실행 자체가 안 된다. 즉 **Phase E에서 "유지보수
+시나리오에만 필요하다"고 적어뒀던 그 수정(2.1.1절 하단 참고 예정, verify가 `code_read_roots`
+내용을 먼저 깔고 `write.files`를 오버레이하도록 확장)이, 실제로는 Java/Gradle 대상 job이라면
+**"새 파일 하나" 시나리오에서도 선행 조건**이라는 뜻이다 — 이 수정 없이는
+`code-build-core-job`이 어떤 목표를 줘도 verify에서 항상 실패한다.
+
+(참고로 이 job에서 로컬 모델(qwen3:8b, CPU)이 요청과 무관한 내용을 생성한 것도 같이 확인됐는데,
+이건 Phase A에서 이미 문서화한 하드웨어 한계이지 Phase D 고유 문제는 아니다 — `review` 노드가
+두 문제 다 정확히 잡아내서 `approve: false`를 낸 것도 검증 로직 자체는 정상이라는 뜻. 테스트
+job은 거절 후 취소로 정리함.)
+
+**다음 행동**: 2.1.2절에서 이미 설계해둔 "verify 스테이징 확장"을 Phase C(git 커넥터, diff 적용 후
+검증)보다 먼저, `code-build-core-job`을 실사용하기 위한 선행 조건으로 재우선순위화할 것.
 
 **Phase E — 유지보수 파이프라인 ("2단계 AI 에이전트 연계.docx" 반영)**
 
