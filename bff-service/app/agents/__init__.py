@@ -1,2 +1,2 @@
-# 기존 멀티 AI 에이전트 시스템(기능 개발 A / 유지보수 B) 연동 지점.
-# Phase 2에서 실제 연동 방식이 정해지면 이 패키지 아래에 클라이언트/라우터를 추가한다.
+# universal_ai_agent_orchestrator 연동 지점. orchestrator_client.py가 REST 클라이언트
+# (Phase B, docs/06-ai-agent-integration.md). git 저장 커넥터(Phase C)도 이 패키지 아래에 추가한다.

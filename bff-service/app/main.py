@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -26,6 +26,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(
         status_code=422,
         content=ApiResponse.fail("VALIDATION_FAILED", str(exc.errors())).model_dump(),
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    # 표준 ApiResponse 포맷(AGENTS.md 0.1절)을 유지하기 위해 FastAPI 기본 {"detail": ...}
+    # 응답 대신 이 핸들러를 거친다. 라우터에서 그냥 raise HTTPException(...)을 써도 된다.
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ApiResponse.fail(f"HTTP_{exc.status_code}", str(exc.detail)).model_dump(),
     )
 
 

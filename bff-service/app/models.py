@@ -21,4 +21,9 @@ class AgentTaskLog(Base):
     agent_name: Mapped[str] = mapped_column(String(100))
     instruction: Mapped[str] = mapped_column(String(2000))
     status: Mapped[str] = mapped_column(String(20), default="PENDING")
+    # 오케스트레이터(universal_ai_agent_orchestrator)에 위임한 Job/Run 식별자. 위임 전이거나
+    # 위임에 실패하면 둘 다 비어 있다 — status가 "DELEGATION_FAILED"면 delegation_error 참고.
+    job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    delegation_error: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -54,6 +54,13 @@ services:
       # (frontend/next.config.ts rewrites) 원래는 CORS가 필요 없다. curl/Postman 등으로 직접
       # 두드려볼 때를 위해 남겨둔다.
       CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-3000},http://127.0.0.1:${FRONTEND_PORT:-3000}
+      # universal_ai_agent_orchestrator 연동 (docs/06-ai-agent-integration.md Phase B).
+      # 오케스트레이터는 별도 docker-compose 프로젝트라 host.docker.internal로 호스트를 경유해 붙는다.
+      # ORCHESTRATOR_API_KEY는 이 파일에 값을 적지 않는다 — 셸 환경변수나 루트 .env로 주입할 것.
+      ORCHESTRATOR_BASE_URL: http://host.docker.internal:${ORCHESTRATOR_PORT:-8000}
+      ORCHESTRATOR_API_KEY: ${ORCHESTRATOR_API_KEY:-}
+      ORCHESTRATOR_WORKSPACE_ID: ${ORCHESTRATOR_WORKSPACE_ID:-default}
+      ORCHESTRATOR_JOB_TEMPLATE_ID: ${ORCHESTRATOR_JOB_TEMPLATE_ID:-code-build-job}
     ports:
       - "${BFF_SERVICE_PORT:-8000}:8000"
 

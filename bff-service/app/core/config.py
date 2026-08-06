@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://aidevframework:aidevframework@localhost:5432/aidevframework_bff"
     # 로컬 개발용 Postgres는 SSL을 안 쓴다. 운영 DB에 SSL이 필요하면 true로 바꾼다.
     database_ssl: bool = False
+    # universal_ai_agent_orchestrator 연동 (docs/06-ai-agent-integration.md Phase B).
+    # X-API-Key는 서버 사이드(이 서비스)에서만 쓰고 브라우저에는 절대 넘기지 않는다.
+    orchestrator_base_url: str = "http://localhost:8000"
+    orchestrator_api_key: str = ""
+    orchestrator_workspace_id: str = "default"
+    orchestrator_job_template_id: str = "code-build-job"
 
 
 settings = Settings()
