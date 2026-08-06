@@ -1,7 +1,8 @@
 """universal_ai_agent_orchestrator REST API 클라이언트.
 
-Phase B(docs/06-ai-agent-integration.md) 범위: Job 생성/시작/상태 조회까지만.
-승인(human 노드)은 아직 오케스트레이터 자체 UI에서 하고, git 반영도 아직 없다.
+Phase B(docs/06-ai-agent-integration.md): Job 생성/시작/상태 조회.
+Phase C: 승인된 Run의 결과 파일(save_files 노드 출력)과 아티팩트 내용 조회를 추가.
+승인(human 노드)은 여전히 오케스트레이터 자체 UI에서 한다.
 """
 from typing import Any
 
@@ -59,6 +60,12 @@ class OrchestratorClient:
 
     async def get_job(self, job_id: str) -> dict[str, Any]:
         return await self._request("GET", f"/jobs/{job_id}")
+
+    async def get_run(self, run_id: str) -> dict[str, Any]:
+        return await self._request("GET", f"/runs/{run_id}")
+
+    async def get_artifact(self, artifact_id: str) -> dict[str, Any]:
+        return await self._request("GET", f"/artifacts/{artifact_id}")
 
 
 orchestrator_client = OrchestratorClient()

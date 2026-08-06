@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     orchestrator_api_key: str = ""
     orchestrator_workspace_id: str = "default"
     orchestrator_job_template_id: str = "code-build-job"
+    # git 저장 커넥터 (docs/06-ai-agent-integration.md Phase C) — 승인된 Job 결과를 실제 GitHub
+    # 저장소에 반영하는 유일한 "쓰기" 경로다. 기본 비활성 — 명시적으로 켜야 동작한다(오케스트레이터의
+    # L2/L3 side-effect가 기본 비활성인 것과 같은 안전장치). GITHUB_TOKEN은 절대 로그/에러 메시지에
+    # 노출하지 않는다 — 로컬 git push 대신 GitHub REST(Git Data API)만 쓰는 이유이기도 하다.
+    git_connector_enabled: bool = False
+    github_token: str = ""
+    github_owner_repo: str = "yongheejung/ai_dev_framework"
+    git_connector_base_branch: str = "main"
+    # 처음엔 좁은 범위만 — 이 접두사로 시작하는 경로만 반영한다(Phase C 권장: bff-service 폴더만).
+    git_connector_path_prefix: str = "bff-service/"
 
 
 settings = Settings()

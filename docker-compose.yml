@@ -61,6 +61,13 @@ services:
       ORCHESTRATOR_API_KEY: ${ORCHESTRATOR_API_KEY:-}
       ORCHESTRATOR_WORKSPACE_ID: ${ORCHESTRATOR_WORKSPACE_ID:-default}
       ORCHESTRATOR_JOB_TEMPLATE_ID: ${ORCHESTRATOR_JOB_TEMPLATE_ID:-code-build-job}
+      # git 저장 커넥터 (Phase C). 기본 비활성 — GIT_CONNECTOR_ENABLED/GITHUB_TOKEN도 이 파일에
+      # 값을 적지 않는다. 켜려면 셸 환경변수나 루트 .env로 주입할 것.
+      GIT_CONNECTOR_ENABLED: ${GIT_CONNECTOR_ENABLED:-false}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_OWNER_REPO: ${GITHUB_OWNER_REPO:-yongheejung/ai_dev_framework}
+      GIT_CONNECTOR_BASE_BRANCH: ${GIT_CONNECTOR_BASE_BRANCH:-main}
+      GIT_CONNECTOR_PATH_PREFIX: ${GIT_CONNECTOR_PATH_PREFIX:-bff-service/}
     ports:
       - "${BFF_SERVICE_PORT:-8000}:8000"
 

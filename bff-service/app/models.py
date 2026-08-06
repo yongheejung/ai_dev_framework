@@ -26,4 +26,7 @@ class AgentTaskLog(Base):
     job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     delegation_error: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    # git 커넥터(Phase C)가 만든 PR. 채워지면 이미 반영된 것 — sync가 중복으로 다시 만들지 않는다.
+    pr_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    git_connector_error: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.git_connector import GitConnectorDisabled, GitConnectorError, apply_job_to_repo
 from app.agents.orchestrator_client import OrchestratorError, orchestrator_client
 from app.core.config import settings
 from app.core.db import get_db
@@ -29,6 +30,8 @@ class AgentTaskResponse(BaseModel):
     job_id: str | None = None
     run_id: str | None = None
     delegation_error: str | None = None
+    pr_url: str | None = None
+    git_connector_error: str | None = None
     created_at: datetime
 
 
@@ -74,10 +77,12 @@ async def list_agent_tasks(db: AsyncSession = Depends(get_db)) -> ApiResponse[li
 async def sync_agent_task(
     task_id: str, db: AsyncSession = Depends(get_db)
 ) -> ApiResponse[AgentTaskResponse]:
-    """오케스트레이터에서 최신 Job 상태를 가져와 로컬 status를 맞춘다.
+    """오케스트레이터에서 최신 Job 상태를 가져와 로컬 status를 맞추고, SUCCEEDED로 막 전환됐으면
+    git 커넥터(Phase C)를 트리거해 PR을 연다.
 
     승인(human 노드)은 아직 오케스트레이터 자체 UI에서 처리하므로, 승인 여부를 반영하려면
-    사람이 그쪽에서 처리한 뒤 이 엔드포인트를 다시 호출해야 한다(Phase C에서 자동 감지로 대체 예정).
+    사람이 그쪽에서 처리한 뒤 이 엔드포인트를 다시 호출해야 한다(웹훅이 없어 폴링 방식 —
+    docs/06-ai-agent-integration.md 2.1.2절).
     """
     task = await db.get(AgentTaskLog, task_id)
     if task is None:
@@ -95,8 +100,26 @@ async def sync_agent_task(
         await db.refresh(task)
         return ApiResponse.ok(AgentTaskResponse.model_validate(task))
 
+    previous_status = task.status
     task.status = job.get("status", task.status)
     task.run_id = job.get("run_id", task.run_id)
+
+    # pr_url이 이미 있으면 이 task는 이미 반영됐다 — 중복으로 다시 PR을 만들지 않는다(멱등성).
+    just_succeeded = task.status == "SUCCEEDED" and previous_status != "SUCCEEDED"
+    if just_succeeded and task.pr_url is None:
+        try:
+            task.pr_url = await apply_job_to_repo(
+                task_id=task.id,
+                job_id=task.job_id,
+                agent_name=task.agent_name,
+                instruction=task.instruction,
+            )
+            task.git_connector_error = None
+        except GitConnectorDisabled:
+            pass  # 기본 상태 — 명시적으로 켜기 전까지는 조용히 건너뛴다.
+        except GitConnectorError as exc:
+            task.git_connector_error = str(exc)[:2000]
+
     await db.commit()
     await db.refresh(task)
     return ApiResponse.ok(AgentTaskResponse.model_validate(task))
