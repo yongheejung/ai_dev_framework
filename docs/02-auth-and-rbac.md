@@ -35,8 +35,8 @@ core-service가 검증한 사용자 정보를 bff-service로 전달하는 방식
 
 ```bash
 # 회원가입 — 기본적으로 USER 역할만 부여됨
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" -H "X-Tenant-Id: default" \
+curl -X POST http://localhost:8080/api/v1/auth/register `
+  -H "Content-Type: application/json" -H "X-Tenant-Id: default" `
   -d '{"username":"alice","password":"alice1234"}'
 
 # 로그인

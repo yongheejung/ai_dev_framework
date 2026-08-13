@@ -51,18 +51,18 @@ MSSQL/Oracle 검증 방법 (재현하고 싶을 때):
 ```bash
 # MSSQL
 docker compose --profile mssql up -d db-mssql-init   # db-mssql 기동 + aidevframework DB 생성
-docker run -d --name core-mssql-test --network ai_dev_framework_default \
-  -e SPRING_PROFILES_ACTIVE=mssql \
-  -e DB_URL="jdbc:sqlserver://db-mssql:1433;databaseName=aidevframework;encrypt=false" \
-  -e DB_USERNAME=sa -e DB_PASSWORD='YourStrong!Passw0rd' \
+docker run -d --name core-mssql-test --network ai_dev_framework_default `
+  -e SPRING_PROFILES_ACTIVE=mssql `
+  -e DB_URL="jdbc:sqlserver://db-mssql:1433;databaseName=aidevframework;encrypt=false" `
+  -e DB_USERNAME=sa -e DB_PASSWORD='YourStrong!Passw0rd' `
   -p 18083:8080 ai_dev_framework-core-service:latest
 
 # Oracle
 docker compose --profile oracle up -d db-oracle
-docker run -d --name core-oracle-test --network ai_dev_framework_default \
-  -e SPRING_PROFILES_ACTIVE=oracle \
-  -e DB_URL="jdbc:oracle:thin:@db-oracle:1521/FREEPDB1" \
-  -e DB_USERNAME=aidevframework -e DB_PASSWORD=aidevframework \
+docker run -d --name core-oracle-test --network ai_dev_framework_default `
+  -e SPRING_PROFILES_ACTIVE=oracle `
+  -e DB_URL="jdbc:oracle:thin:@db-oracle:1521/FREEPDB1" `
+  -e DB_USERNAME=aidevframework -e DB_PASSWORD=aidevframework `
   -p 18084:8080 ai_dev_framework-core-service:latest
 ```
 

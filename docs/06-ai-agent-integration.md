@@ -183,6 +183,35 @@ CLI/웹 UI 대신 API를 직접 호출했고("정말 되는지" 확인이 목적
 이미지를 그대로 못 쓰고 `docker/code-sandbox.Dockerfile`을 빌드해야 했던 점, `.env`가 디스크에
 없어서 복원해야 했던 점은 이 저장소 자체의 로컬 운영 이슈였고 워크플로우 설계와는 무관.
 
+**Phase A 재검증 (2026-08-10, 다른 PC에서)** — 스택이 꺼져 있어 다시 올리고 같은 `code-build-backend-job`을
+재실행. 두 가지를 새로 발견·정리했다.
+
+1. **포트 충돌 해소**: `docs` §2.1이 예전부터 지적했던 "8000/3000이 우리 bff-service/frontend와
+   겹침" 문제가 실제로 재현됐다(`ai_dev_framework-bff-service-1`, `ai_dev_framework-frontend-1`이
+   이미 그 포트를 점유). `docker-compose.local-ports.yml`(`!override` 머지 태그로 `ports` 전체
+   교체 — 일반 리스트 병합은 base와 override가 합쳐져서 base 포트가 여전히 남는다는 걸 실제로
+   겪음)를 신규 추가해 API를 8001, UI를 3001로 재매핑. `docker compose -f docker-compose.yml -f
+   docker-compose.dev.yml -f docker-compose.local-ports.yml up -d`로 기동.
+2. **진짜 회귀 버그 발견·수정**: 1차 재검증 시도가 300초 만에 `ReadTimeout`으로 실패했다 —
+   `config/model_endpoints.yaml`은 파일상 `timeout_sec: 1200`(§Phase A 최초 수정)인데, **API
+   컨테이너 이미지 안에는 여전히 옛 300초 설정이 박혀 있었다.** 원인: `Dockerfile`이
+   `COPY config ./config`로 이미지 빌드 시점에 설정을 굽는 구조인데, 그 뒤로 이미지를 다시 빌드한
+   적이 없어서 파일 수정이 실행 중인 컨테이너에 전혀 반영되지 않고 있었다(`docker compose up -d`만
+   으로는 기존 이미지를 재사용하고 재빌드하지 않는다). `docker compose build api` 후 재기동해
+   해결 — 컨테이너 안 설정과 `/model-endpoints` API 응답 모두 `version: 3, timeout_sec: 1200`으로
+   확인.
+3. **재검증 결과 — 결론은 최초 Phase A와 동일**: 위 수정 후 재실행하니 더 이상 타임아웃은 안
+   나고, `write` 단계가 실제로 응답을 받아왔다. 다만 `all models failed for agent code-writer:
+   ollama/qwen3:8b ... ValueError: invalid JSON output: Expecting ',' delimiter`로 실패 — 구조화
+   출력(JSON)이 특정 지점에서 깨지는, CPU 전용 소형 모델의 품질 한계다. 이 PC도 Intel 내장
+   그래픽뿐이라 GPU는 여전히 없다(`nvidia-smi` 없음). **파이프라인/설정은 정상, 남은 유일한
+   변수는 여전히 "모델 품질"**이라는 최초 Phase A의 결론을 그대로 재확인했다 — 이번엔 별개의
+   인프라 버그(위 2번)까지 하나 더 찾아 고친 상태로.
+
+> 다음에 이 검증을 또 돌릴 일이 있으면: (a) `config/`, `app/`, `examples/` 등 이미지에 COPY되는
+> 파일을 고친 뒤에는 **반드시 `docker compose build`(또는 `up -d --build`)로 재빌드**할 것 —
+> `up -d`만으로는 조용히 무시된다. (b) 포트는 `docker-compose.local-ports.yml`을 계속 재사용.
+
 > **범위 주의(코드 확인 완료)**: `examples/workflows/code_build.yaml`의 `verify`(code.exec) 노드는
 > `$nodes.write.files` — 즉 `@coder`가 이번에 새로 쓴 파일만 격리 샌드박스에 주입한다. bff-service
 > 기존 코드베이스 전체가 마운트되는 게 아니다. `context`(code.read)는 작성자에게 읽기 참고자료로만
